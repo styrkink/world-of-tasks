@@ -1,16 +1,17 @@
-FROM node:20-alpine
+FROM node:20-slim
+
+# Install OpenSSL for Prisma
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install dependencies
+# Copy package files first
 COPY package*.json ./
-RUN npm install
-
-# Copy Prisma schema first for caching
 COPY prisma ./prisma/
 
-# Generate Prisma client
-RUN npx prisma generate
+# Copy entrypoint
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Copy source
 COPY . .
@@ -18,5 +19,5 @@ COPY . .
 # Expose port
 EXPOSE 4000
 
-# Development mode with hot reload
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["npm", "run", "start:dev"]
